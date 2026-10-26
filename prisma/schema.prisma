@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  email         String         @unique
+  passwordHash  String
+  avatarUrl     String?        @default("")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  chats         ChatParticipant[]
+  messages      Message[]
+}
+
+model Chat {
+  id            String         @id @default(uuid())
+  isGroup       Boolean        @default(false)
+  groupName     String?        // Only used if isGroup is true
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  participants  ChatParticipant[]
+  messages      Message[]
+}
+
+// Junction table to connect Users and Chats (Many-to-Many)
+model ChatParticipant {
+  id            String         @id @default(uuid())
+  userId        String
+  chatId        String
+  joinedAt      DateTime       @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat          Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatId]) // Ensures a user can't be added to the same chat twice
+}
+
+model Message {
+  id            String         @id @default(uuid())
+  content       String         // The text message or media link
+  mediaUrl      String?        // Optional: for images, videos, or files
+  createdAt     DateTime       @default(now())
+
+  // Foreign Keys
+  senderId      String
+  chatId        String
+
+  // Relations
+  sender        User           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chat          Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
