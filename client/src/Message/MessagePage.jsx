@@ -146,7 +146,8 @@ export default function MessagesPage() {
     );
   });
   return (
-    <div>
+    <div className='min-w-full ' >
+      <header className='bg-white  w-full h-17 ' ></header>
       <div className="text-slate-100 p-4 sm:p-8 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Direct Messages</h1>
@@ -164,7 +165,7 @@ export default function MessagesPage() {
             {error}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 bg-slate-800/80 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl h-[600px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 bg-slate-800/80 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl h-600px">
             {/* LEFT SIDEBAR: Conversations List */}
             {/* LEFT SIDEBAR: Conversations List */}
             <div className="border-r border-slate-700/60 overflow-y-auto flex flex-col bg-slate-900/30">

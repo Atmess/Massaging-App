@@ -39,13 +39,13 @@ export default function Cart() {
               className="border p-2 md:p-4 rounded shadow bg-white flex flex-col justify-between w-full"
               key={index}
             >
-              <h3 className="line-clamp-2 text-balance text-xs md:text-sm lg:text-lg font-semibold min-h-[2.5rem] md:min-h-[3rem] mt-2">
+              <h3 className="line-clamp-2 text-balance text-xs md:text-sm lg:text-lg font-semibold min-h-10 md:min-h-12 mt-2">
                 {item.name}
               </h3>
               <img
                 src={item.img}
                 alt={item.name}
-                className="w-full aspect-[59/86] object-contain"
+                className="w-full aspect-59/86 object-contain"
               />
               <p>{item.id}</p>
               <p>type : {item.type}</p>

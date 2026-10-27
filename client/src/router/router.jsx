@@ -31,7 +31,6 @@ const routes = [
           { path: 'posts', element: <PublishedPostsPage /> },
           { path: 'posts/:id', element: <SinglePostView /> },
           { path: 'UserProfile', element: <ProfilePage /> },
-          { path: 'message', element: <MessagePage /> },
         ],
       },
       {
@@ -48,6 +47,7 @@ const routes = [
       { path: 'cart', element: <Cart /> },
       { path: 'login', element: <Login /> },
       { path:'register',element:<Register/> },
+      { path: 'message', element: <MessagePage /> },
     ],
   },
 ];
