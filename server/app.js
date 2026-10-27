@@ -6,13 +6,12 @@ const http = require("http");
 const passport = require("./config/passport");
 const { PrismaSessionStore } = require("@quixo3/prisma-session-store");
 const session = require("express-session");
-const prisma = require("./lib/prisma");
+const prisma = require("../lib/prisma.js");
 const indexRouter = require("./routes/indexRouter");
 
 const app = express();
 const server = http.createServer(app); // Wrapped for Socket.io later!
 const PORT = process.env.PORT || 8080;
-
 // --- CORS CONFIG (Allows React frontend to talk to Express) ---
 app.use(
   cors({

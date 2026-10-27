@@ -63,9 +63,15 @@ router.post("/register", [
   body("email").trim().isEmail().withMessage("Please enter a valid email address.").normalizeEmail(),
   body("username").trim().notEmpty().withMessage("Username cannot be empty.").escape(),
   body("password").isLength({ min: 5 }).withMessage("Password must be at least 5 characters long."),
+  body("confirmPassword").custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error("Passwords do not match.");
+      }
+      return true;
+    })
 ], authController.createUserPost);
 
-router.post("/log-in", (req, res, next) => {
+router.post("/login", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) return next(err);
     if (!user) {

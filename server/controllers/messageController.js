@@ -1,4 +1,4 @@
-const prisma = require("../lib/prisma")
+const prisma = require("../../lib/prisma")
 
 const GetallMessage = async (req,res,next) => {
   const userId = parseInt(req.user.userId ,10)
@@ -163,4 +163,17 @@ const getallforUser = async (req, res, next) => {
     next(err);
   }
 };
-module.exports= ({GetallMessage,sendMessage,getMessagesWithUser,getConversations,getallforUser})
+
+
+const getMessagesForChat = async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { not: req.user.userId } },
+      select: { id: true, username: true, email: true },
+    });
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+};
+module.exports= ({GetallMessage,sendMessage,getMessagesWithUser,getConversations,getallforUser,getMessagesForChat})

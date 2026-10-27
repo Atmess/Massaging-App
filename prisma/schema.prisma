@@ -65,3 +65,10 @@ model Message {
   sender        User           @relation(fields: [senderId], references: [id], onDelete: Cascade)
   chat          Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String   // or @db.Text depending on your database needs
+  expiresAt DateTime
+}

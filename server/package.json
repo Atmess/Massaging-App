@@ -8,6 +8,7 @@
     "dev": "nodemon app.js"
   },
   "dependencies": {
+    "@quixo3/prisma-session-store": "^3.1.21",
     "@supabase/supabase-js": "^2.117.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -24,8 +25,10 @@
   "devDependencies": {
     "@types/pg": "^8.23.1",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.5.2",
     "nodemon": "^3.1.14",
-    "prettier": "^3.9.9"
+    "prettier": "^3.9.9",
+    "supertest": "^7.3.1"
   },
   "overrides": {
     "braces": "^3.0.3"
