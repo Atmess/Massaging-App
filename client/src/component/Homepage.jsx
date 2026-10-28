@@ -29,14 +29,14 @@ export default function Home() {
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch posts');
+          throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         console.log(data);
         setPosts(data);
       } catch (err) {
         console.error('Error fetching home posts:', err);
-        setError('Unable to load blog posts right now.');
+        setError(err.message || 'Unable to load blog posts right now.');
       } finally {
         setLoading(false);
       }
@@ -48,7 +48,7 @@ export default function Home() {
   return (
     <div className="min-h-screen text-slate-100 flex flex-col">
       {/* HERO SECTION */}
-      <header className="relative bg-gradient-to-b from-slate-800/160 to-slate-900/180 border-b border-slate-800 py-20 px-6 text-center">
+      <header className="relative bg-linear-to-b from-slate-800/160 to-slate-900/180 border-b border-slate-800 py-20 px-6 text-center">
         <div className="max-w-4xl mx-auto space-y-6">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
             Insights, Stories & <span className="text-blue-500">Code.</span>

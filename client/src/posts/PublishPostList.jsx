@@ -28,7 +28,7 @@ export default function PublishedPostsPage() {
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch posts');
+          throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         console.log(data);
@@ -52,13 +52,13 @@ export default function PublishedPostsPage() {
 
   if (loading)
     return (
-      <div className=" min-h-screen text-slate-100 p-6 sm:p-12  text-center py-20 text-slate-400">
+      <div className=" min-h-screen p-6 sm:p-12  text-center py-20 text-slate-400">
         Loading posts...
       </div>
     );
   if (error)
     return (
-      <div className=" min-h-screen  text-slate-100 p-6 sm:p-12 text-center py-20 text-red-400">
+      <div className=" min-h-screen  p-6 sm:p-12 text-center py-20 text-red-400">
         {error}
       </div>
     );

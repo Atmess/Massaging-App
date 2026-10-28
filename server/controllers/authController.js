@@ -37,15 +37,12 @@ const createUserPost = async (req, res, next) => {
 
 
 
-const getCurrentUser = async (req,res,next) => {
-    const body = req.body
-    const user = req.user
-    const params = req.params
-
-    console.log(body)
-    console.log(user)
-    console.log(params)
-}
+const getCurrentUser = async (req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return res.json({ isAuthenticated: true, user: req.user });
+  }
+  return res.status(401).json({ isAuthenticated: false });
+};
 
 const updateProfile = async (req,res,next) => {
     const body = req.body
