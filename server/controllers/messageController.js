@@ -1,3 +1,4 @@
+const { use } = require("passport")
 const prisma = require("../../lib/prisma")
 
 const GetallMessage = async (req,res,next) => {
@@ -176,4 +177,16 @@ const getMessagesForChat = async (req, res, next) => {
     next(err);
   }
 };
-module.exports= ({GetallMessage,sendMessage,getMessagesWithUser,getConversations,getallforUser,getMessagesForChat})
+
+const testing = async (req,res,next) => {
+      const body = req.body
+      const params = req.params
+      const user= req.user
+      console.log(body)
+      console.log(params)
+      console.log(user)
+      res.status(200).json(body)
+}
+module.exports= ({GetallMessage,sendMessage,getMessagesWithUser,getConversations,getallforUser,getMessagesForChat,
+  testing
+})

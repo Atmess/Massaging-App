@@ -46,10 +46,10 @@ export default function SideHeader() {
               </button>
 
               {/* Hover Tooltip Label */}
-{/* Hover Tooltip Label */}
-<span className="absolute left-full top-1/2 -translate-y-1/2 ml-3 hidden group-hover:block bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-2xl whitespace-nowrap z-100 pointer-events-none border border-slate-700">
-  {item.name}
-</span>
+              {/* Hover Tooltip Label */}
+              <span className="absolute left-full top-1/2 -translate-y-1/2 ml-3 hidden group-hover:block bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-2xl whitespace-nowrap z-100 pointer-events-none border border-slate-700">
+                {item.name}
+              </span>
             </Link>
           ))}
         </nav>

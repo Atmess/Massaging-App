@@ -102,6 +102,7 @@ router.get("/current-user", (req, res) => {
   }
 });
 
+router.post('/messages/new',messageController.testing)
 // ==========================================
 // --- PROTECTED CHAT & MESSAGE ROUTES ---
 // ==========================================
