@@ -102,7 +102,7 @@ router.get("/current-user", (req, res) => {
   }
 });
 
-router.post('/messages/new',messageController.testing)
+router.post('/messages/new',messageController.findReceiver)
 // ==========================================
 // --- PROTECTED CHAT & MESSAGE ROUTES ---
 // ==========================================
@@ -117,6 +117,7 @@ router.patch('/users/profile', FilterFile, authController.updateProfile);
 // Chat Rooms / Conversations
 router.get('/chats', chatController.getUserChats);           
 router.post('/chats', chatController.createPrivateChat);     
+router.get('/chats/find', chatController.getChatWithUser);   
 
 // Messages
 router.get('/messages/:chatId', messageController.getMessagesForChat); 

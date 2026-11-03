@@ -4,7 +4,7 @@ import API_BASE_URL from '../config'
 import message from '../assets/picture/2.jpg'
 
 
-export default function ChatList() {
+export default function ChatList({onSelectChat}) {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [chats, setChats] = useState([])
@@ -46,6 +46,19 @@ export default function ChatList() {
       setLoading(false);
     }
   };
+  const getChatDisplayName = (chat, currentUserId) => {
+  // Group chat: use stored groupName
+  if (chat.isGroup && chat.groupName) {
+    return chat.groupName;
+  }
+
+  // Private chat: find the participant who isn't you
+  const otherParticipant = chat.participants.find(
+    (p) => p.userId !== currentUserId
+  );
+
+  return otherParticipant?.user?.username || "Unknown";
+};
 
 
   const handleCreateNewMessage = async (e) => {
@@ -53,15 +66,16 @@ export default function ChatList() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch(`${API_BASE_URL}/api/messages/new`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           // Include authorization headers if your backend uses tokens/cookies (e.g., Passport.js)
         },
         body: JSON.stringify({
           recipientId: recipientId,     // The ID or number you are sending to
-          recipientUser: recipientUser, // The ID or username you are sending to
+          recipientUser: recipientUsername, // The ID or username you are sending to
           content: messageText,     // The body of the message
         }),
       });
@@ -70,6 +84,7 @@ export default function ChatList() {
 
       const data = await response.json();
       console.log('Message created successfully:', data);
+      onSelectChat(data)
       
       // Reset form or redirect back to chat list
     } catch (err) {
@@ -109,12 +124,15 @@ export default function ChatList() {
         )}
 
         {chats.map((chat) => (
-          <div key={chat.id} className="p-3 border-b border-stone-100">
-            {chat.name || 'Chat'} {chat.id}
+          <div onClick={()=>onSelectChat(chat.id)} key={chat.id} className="p-3 border-b border-stone-100">
+            <h3>{getChatDisplayName(chat, user.id)}</h3>
+            <p>{chat.messages[0]?.content}</p>
+            
            
           </div>
         ))}
       </div>
+      <button onClick={()=>console.log(chats)} >test</button>
       </div>)}
       {mainstate==='newMessage' && (
         <div className=" bg-white  " >
@@ -225,9 +243,10 @@ export default function ChatList() {
       <div>
         <label className="block text-sm text-stone-600 mb-1">Recipient ID or Number</label>
         <input 
-          type="text" 
+          type="number" 
+          inputMode="numeric"
           value={recipientId} 
-          onChange={(e) => setRecipientId(e.target.value)} 
+          onChange={(e) => setRecipientId(e.target.value.replace(/\D/g, ''))} 
           placeholder="e.g. 2" 
           className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
@@ -247,7 +266,8 @@ export default function ChatList() {
           required
         />
       </div>
-      {/* Message Content Input */}
+    {/* Message Content Input */}
+     {/*  
       <div>
         <label className="block text-sm text-stone-600 mb-1">Message</label>
         <textarea 
@@ -258,13 +278,13 @@ export default function ChatList() {
           required
         />
       </div>
-
+*/}
       <button 
         type="submit" 
         disabled={loading}
         className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-500 transition disabled:opacity-50"
       >
-        {loading ? 'Sending...' : 'Send Message'}
+        {loading ? 'Finding...' : 'Find Receiver'}
       </button>
     </form>
         </div>

@@ -2,7 +2,7 @@ const prisma = require("../../lib/prisma");
 
 const getUserChats = async (req, res, next) => {
     // Make sure your Passport user object property matches your schema (e.g., req.user.id)
-    const userId = req.user?.id || req.user?.userId;
+    const userId = req.user?.id;
 
     if (!userId) {
         return res.status(401).json({ error: 'Unauthorized: No user found in session' });
@@ -44,7 +44,7 @@ const getUserChats = async (req, res, next) => {
 
 
 const createPrivateChat = async (req, res, next) => {
-    const currentUserId = req.user?.id || req.user?.userId;
+    const currentUserId = req.user?.id;
     const { recipientId } = req.body; // The user ID of the person you want to talk to
 
     if (!recipientId) {
@@ -104,4 +104,54 @@ const createPrivateChat = async (req, res, next) => {
         next(err);
     }
 };
-module.exports=({getUserChats,createPrivateChat})
+const getChatWithUser = async (req, res, next) => {
+  const userId = req.user?.id;
+  const { otherUserId } = req.query;
+
+  if (!otherUserId) {
+    return res.status(400).json({ message: 'otherUserId is required' });
+  }
+
+  try {
+    let chat = await prisma.chat.findFirst({
+      where: {
+        isGroup: false,
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: otherUserId } } },
+        ],
+      },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          take: 50,
+          include: {
+            sender: { select: { id: true, username: true, avatarUrl: true } },
+          },
+        },
+        participants: {
+          include: {
+            user: { select: { id: true, username: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+
+    if (!chat) {
+      return res.json({ chatId: null, messages: [], otherUser: null });
+    }
+
+    const otherParticipant = chat.participants.find((p) => p.userId !== userId);
+
+    res.json({
+      chatId: chat.id,
+      messages: chat.messages,
+      otherUser: otherParticipant?.user || null,
+    });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
+module.exports = ({ getUserChats, createPrivateChat, getChatWithUser });

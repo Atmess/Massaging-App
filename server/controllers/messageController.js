@@ -2,7 +2,7 @@ const { use } = require("passport")
 const prisma = require("../../lib/prisma")
 
 const GetallMessage = async (req,res,next) => {
-  const userId = parseInt(req.user.userId ,10)
+  const userId = req.user.id
 
   const user = await prisma.user.findUnique({
     where:{id:userId}
@@ -13,9 +13,6 @@ const GetallMessage = async (req,res,next) => {
   if(user.role !== 'ADMIN'){
     return res.status(403).json({message:'forbiden'})
   }
-    if (Number.isNaN(userId)) {
-  return res.status(400).json({ message: 'Invalid user id' });
-    }
     try{    // Find messages where user is sender or receiver
     const messages = await prisma.message.findMany({
       select: {
@@ -45,10 +42,7 @@ const GetallMessage = async (req,res,next) => {
 
 const getConversations = async (req, res, next) => {
   try {
-   const userId = parseInt(req.user.userId, 10);
-  if (Number.isNaN(userId)) {
-  return res.status(400).json({ message: 'Invalid user id' });
-}
+   const userId = req.user.id;
     // Find messages where user is sender or receiver
     const messages = await prisma.message.findMany({
       where: {
@@ -82,8 +76,8 @@ const getConversations = async (req, res, next) => {
 // Get all messages between logged-in user and a specific contact
 const getMessagesWithUser = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
-    const contactId = parseInt(req.params.id,10);
+    const userId = req.user.id;
+    const contactId = req.params.id;
 
     const messages = await prisma.message.findMany({
       where: {
@@ -104,59 +98,86 @@ const getMessagesWithUser = async (req, res, next) => {
 // Send a new message
 const sendMessage = async (req, res, next) => {
   try {
-    const senderId = req.user.userId;
-    const { receiverId,recipient, content } = req.body; //receiver (ID) or recipient (email or username)
+    const senderId = req.user.id;
+    const { recipientId, recipient, content } = req.body;
 
+    // Validate that content and a receiver exist
     if (!content) {
-      return res.status(400).json({ message: 'Receiver and content are required' });
+      return res.status(400).json({ message: ' content are required' });
     }
+
     const userSelect = { id: true, username: true, email: true, avatarUrl: true };
     let receiver = null;
-    if(receiverId){
-      const id= parseInt(receiverId,10)
-      if(Number.isNaN(id)){
-        return res.status(400).json({ message: 'Invalid receiver id' });
-      }
-      receiver = await prisma.user.findUnique({where: { id }, select: userSelect})
-    }else if(recipient?.trim()){
+
+    if (recipientId) {
+      // FIX: Query using id: recipientId instead of just `id`
+      receiver = await prisma.user.findUnique({ 
+        where: { id: recipientId }, 
+        select: userSelect 
+      });
+    } else if (recipient?.trim()) {
       const value = recipient.trim().replace(/^@/, '');
       receiver = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { username: { equals: value, mode: 'insensitive' } },
-              { email: { equals: value, mode: 'insensitive' } },
-            ],
-          },
-          select: userSelect,
-      })
-    } else{
-      return res.status(400).json({ message: 'Receiver is required' });
+        where: {
+          OR: [
+            { username: { equals: value, mode: 'insensitive' } },
+            { email: { equals: value, mode: 'insensitive' } },
+          ],
+        },
+        select: userSelect,
+      });
     }
+
     if (!receiver) {
       return res.status(404).json({ message: 'User not found' });
     }
+
     if (receiver.id === senderId) {
       return res.status(400).json({ message: "You can't message yourself" });
     }
+
+    let chat = await prisma.chat.findFirst({
+      where:{
+        isGroup:false,
+        AND:[
+          {participants:{some:{userId:senderId}}},
+          {participants:{some:{userId:receiver.id}}}
+        ]
+      }
+    })
+
+    if(!chat){
+      chat = await prisma.chat.create({
+        data:{
+          isGroup:false,
+          participants:{
+            create:[
+              {userId:senderId},
+              {userId:receiver.id}
+            ]
+          }
+        }
+      })
+    }
+
     const newMessage = await prisma.message.create({
-      data: {
+      data:{
         content,
         senderId,
-        receiverId: receiver.id,
+        chatId:chat.id
       },
-       include: { receiver: { select: userSelect } },
-    });
+      include:{sender:{select:userSelect}}
+    })
 
     res.status(201).json(newMessage);
   } catch (error) {
     next(error);
   }
 };
-
 const getallforUser = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
-      where: { id: { not: req.user.userId } },
+      where: { id: { not: req.user.id } },
       select: { id: true, username: true, email: true },
     });
     res.json(users);
@@ -169,7 +190,7 @@ const getallforUser = async (req, res, next) => {
 const getMessagesForChat = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
-      where: { id: { not: req.user.userId } },
+      where: { id: { not: req.user.id } },
       select: { id: true, username: true, email: true },
     });
     res.json(users);
@@ -178,6 +199,40 @@ const getMessagesForChat = async (req, res, next) => {
   }
 };
 
+const findReceiver = async (req, res, next) => {
+  const { recipientId, recipientUser, content } = req.body;
+  const userId = req.user.id;
+
+  try {
+    let receiver = null;
+
+    // 1. Try by ID (UUID) first
+    if (recipientId) {
+      receiver = await prisma.user.findUnique({
+        where: { id: recipientId },
+        select: { id: true, username: true, email: true, avatarUrl: true },
+      });
+    }
+
+    // 2. Try by email or username
+    if (!receiver && recipientUser) {
+      receiver = await prisma.user.findFirst({
+        where: {
+          OR: [{ email: recipientUser }, { username: recipientUser }],
+        },
+        select: { id: true, username: true, email: true, avatarUrl: true },
+      });
+    }
+
+    if (!receiver) {
+      return res.status(404).json({ message: 'Receiver not found' });
+    }
+    res.status(200).json(receiver);
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+}; 
 const testing = async (req,res,next) => {
       const body = req.body
       const params = req.params
@@ -185,8 +240,8 @@ const testing = async (req,res,next) => {
       console.log(body)
       console.log(params)
       console.log(user)
-      res.status(200).json(body)
+      res.status(200).json({error:'test'})
 }
 module.exports= ({GetallMessage,sendMessage,getMessagesWithUser,getConversations,getallforUser,getMessagesForChat,
-  testing
+  testing,findReceiver
 })

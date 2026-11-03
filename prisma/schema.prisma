@@ -20,6 +20,7 @@ model User {
   avatarUrl     String?        @default("")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  phone         String         @default("")
 
   // Relations
   chats         ChatParticipant[]

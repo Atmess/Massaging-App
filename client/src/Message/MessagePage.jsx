@@ -1,31 +1,79 @@
 import { useState, useRef, useEffect } from 'react'
 import home from '../assets/picture/live-twin-home.png'
 import image from '../assets/picture/live-twin-image.jpg'
+import API_BASE_URL from '../config'
+import { ApiLevel } from '@testing-library/user-event/dist/cjs/utils/index.js'
 
 const bgImages = [home, image]
 export default function Chat({chat}) {
-  const [messages, setMessages] = useState([
-    { id: 1, text: 'Hey!', mine: false },
-    { id: 2, text: 'Hi, what’s up?', mine: true },
-  ])
- 
+  const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
   const bottomRef = useRef(null)
 const pick = () => bgImages[Math.floor(Math.random() * bgImages.length)]
 const [bgimage, setbgimage] = useState(() => pick())
 
+useEffect(() => {
+    if (!chat?.id) return;
 
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/messages/${chat.id}`, {
+          method: 'GET',
+          credentials: 'include', // Sends your session cookie
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch messages');
+
+        const data = await response.json();
+        setMessages(data); // Populate messages from your database
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+      }
+    };
+
+    fetchMessages();
+  }, [chat?.id]);
 
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const send = () => {
-    if (!text.trim()) return
-    setMessages(m => [...m, { id: Date.now(), text, mine: true }])
-    setText('')
-  }
+const send = async () => {
+    if (!text.trim()) return;
+
+    const messageText = text;
+    setText(''); // Clear the input right away for smooth typing
+
+    // 1. Instantly show it on screen (Optimistic UI update)
+    const tempId = Date.now();
+    setMessages((m) => [...m, { id: tempId, text: messageText, mine: true }]);
+
+    try {
+      // 2. Send it to your Express backend
+      const response = await fetch(`${API_BASE_URL}/api/messages`, {
+        method: 'POST',
+        credentials: 'include', // Crucial for sending your session cookie
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientId: chat.id, // The target user's ID
+          content: messageText, // The message content
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save message to database');
+      }
+
+      const savedMessage = await response.json();
+      console.log('Message saved successfully:', savedMessage);
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
+  };
 
     if (!chat) {
     return (
@@ -43,7 +91,7 @@ const [bgimage, setbgimage] = useState(() => pick())
   style={{ backgroundImage: `url(${bgimage})` }}
 >
       <header className="h-16 shrink-0 bg-[#f0f2f5] px-4 flex items-center">
-        Contact name
+       <img src={chat.avatarUrl} alt='' /> {chat.username}
       </header>
 
       <main className="flex-1 overflow-y-auto px-8 py-4 space-y-2">
