@@ -1,4 +1,3 @@
-const { use } = require("passport")
 const prisma = require("../../lib/prisma")
 
 const GetallMessage = async (req,res,next) => {
@@ -99,35 +98,33 @@ const getMessagesWithUser = async (req, res, next) => {
 const sendMessage = async (req, res, next) => {
   try {
     const senderId = req.user?.id;
-    const { recipientId, recipient, content } = req.body;
+    const { chatId, content } = req.body;
     console.log(senderId)
     console.log(req.body)
 
-    // Validate that content and a receiver exist
-    if (!content) {
-      return res.status(400).json({ message: ' content are required' });
+
+    if (!senderId) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
+    // Validate that content and a receiver exist
+    if (!chatId || !content?.trim()) {
+      return res.status(400).json({ message: 'chatId and content are required' });
+    }
+
+    const participant = await prisma.chatParticipant.findFirst({
+      where: { chatId, userId: senderId },
+    });
+    if (!participant) {
+      return res.status(403).json({ message: 'You are not part of this chat' });
+    }
+
+
 
     const userSelect = { id: true, username: true, email: true, avatarUrl: true };
-    let receiver = null;
 
     let chat = await prisma.chat.findFirst({
-      where:{id:recipientId}
+      where:{id:chatId}
     })
-
-    if(!chat){
-      chat = await prisma.chat.create({
-        data:{
-          isGroup:false,
-          participants:{
-            create:[
-              {userId:senderId},
-              {userId:receiver.id}
-            ]
-          }
-        }
-      })
-    }
 
     const newMessage = await prisma.message.create({
       data:{
@@ -137,12 +134,15 @@ const sendMessage = async (req, res, next) => {
       },
       include:{sender:{select:userSelect}}
     })
-
+    
     res.status(201).json(newMessage);
   } catch (error) {
     next(error);
   }
 };
+
+
+
 const getallforUser = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({

@@ -1,5 +1,6 @@
 const prisma = require("../../lib/prisma");
 
+const userSelect = { id: true, username: true, avatarUrl: true };
 const getUserChats = async (req, res, next) => {
     // Make sure your Passport user object property matches your schema (e.g., req.user.id)
     const userId = req.user?.id;
@@ -21,7 +22,7 @@ const getUserChats = async (req, res, next) => {
                 participants: {
                     include: {
                         user: {
-                            select: { id: true, username: true, avatarUrl: true } // Pulls in profile details
+                            select: userSelect // Pulls in profile details
                         }
                     }
                 },
@@ -68,7 +69,7 @@ const createPrivateChat = async (req, res, next) => {
             include: {
                 participants: {
                     include: {
-                        user: { select: { id: true, username: true, avatarUrl: true } }
+                        user: { select: userSelect }
                     }
                 }
             }
@@ -128,12 +129,12 @@ const getChatWithUser = async (req, res, next) => {
           orderBy: { createdAt: 'asc' },
           take: 50,
           include: {
-            sender: { select: { id: true, username: true, avatarUrl: true } },
+          sender: { select: userSelect },
           },
         },
         participants: {
           include: {
-            user: { select: { id: true, username: true, avatarUrl: true } },
+            user: { select: userSelect },
           },
         },
       },
@@ -157,35 +158,46 @@ const getChatWithUser = async (req, res, next) => {
 };
 
 
-const findReceiver = async (req, res, next) => {
-  const { recipientId, recipientUser, content } = req.body;
-  const userId = req.user.id;
-  try {
-    let receiver = null;
-    let chat = null;
 
-    // 1. Try by ID (UUID) first
+const findReceiver = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { recipientId } = req.body;
+    const recipientUser = req.body.recipientUser?.trim();
+
+    let receiver = null;
+
     if (recipientId) {
       receiver = await prisma.user.findUnique({
         where: { id: recipientId },
-        select: { id: true, username: true, email: true, avatarUrl: true },
+        select: userSelect,
       });
     }
 
-    // 2. Try by email or username
     if (!receiver && recipientUser) {
       receiver = await prisma.user.findFirst({
         where: {
-          OR: [{ email: recipientUser }, { username: recipientUser }],
+          OR: [
+            { email: { equals: recipientUser, mode: 'insensitive' } },
+            { username: { equals: recipientUser, mode: 'insensitive' } },
+          ],
         },
-        select: { id: true, username: true, email: true, avatarUrl: true },
+        select: userSelect,
       });
     }
+
     if (!receiver) {
       return res.status(404).json({ message: 'Receiver not found' });
     }
-    
-        chat = await prisma.chat.findFirst({
+    if (receiver.id === userId) {
+      return res.status(400).json({ message: "You can't chat with yourself" });
+    }
+
+    const include = {
+      participants: { include: { user: { select: userSelect } } },
+    };
+
+    let chat = await prisma.chat.findFirst({
       where: {
         isGroup: false,
         AND: [
@@ -193,50 +205,22 @@ const findReceiver = async (req, res, next) => {
           { participants: { some: { userId: receiver.id } } },
         ],
       },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          take: 50,
-          include: {
-            sender: { select: { id: true, username: true, avatarUrl: true } },
-          },
-        },
-        participants: {
-          include: {
-            user: { select: { id: true, username: true, avatarUrl: true } },
-          },
-        },
-      },
+      include,
     });
 
-    if(!chat){  
-        chat = await prisma.chat.create({
-            data: {
-                isGroup: false,
-                participants: {
-                    create: [
-                        { userId: userId },
-                        { userId: receiver.id }
-                    ]
-                }
-            },
-            include: {
-                participants: {
-                    include: {
-                        user: { select: { id: true, username: true, avatarUrl: true } }
-                    }
-                }
-            }
-        });
-
-      
+    if (!chat) {
+      chat = await prisma.chat.create({
+        data: {
+          isGroup: false,
+          participants: { create: [{ userId }, { userId: receiver.id }] },
+        },
+        include,
+      });
     }
-  
 
     res.status(200).json(chat);
   } catch (err) {
-    console.error(err);
     next(err);
   }
-}; 
+};
 module.exports = ({ getUserChats, createPrivateChat, getChatWithUser ,findReceiver});

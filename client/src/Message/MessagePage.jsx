@@ -62,8 +62,6 @@ const send = async () => {
     setText(''); // Clear the input right away for smooth typing
 
     // 1. Instantly show it on screen (Optimistic UI update)
-    const tempId = Date.now();
-    setMessages((m) => [...m, { id: tempId, text: messageText, mine: true }]);
 
     try {
       // 2. Send it to your Express backend
@@ -74,7 +72,7 @@ const send = async () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          recipientId: chat.id, // The target user's ID
+          chatId: chat.id, // The target user's ID
           content: messageText, // The message content
         }),
       });
@@ -84,6 +82,7 @@ const send = async () => {
       }
 
       const savedMessage = await response.json();
+      setMessages(m => [...m, savedMessage])
       console.log('Message saved successfully:', savedMessage);
     } catch (err) {
       console.error('Error sending message:', err);
@@ -109,7 +108,7 @@ const send = async () => {
   style={{ backgroundImage: `url(${bgimage})` }}
 >
       
-       {user && chat && (
+       {other && (
   <header className="h-16 shrink-0 bg-[#f0f2f5] px-4 flex items-center">
     <img src={other.avatarUrl || logo} alt={other.username} className="h-8 w-8 rounded-full object-cover border border-slate-600 shrink-0" />
     <span>{other.username}</span>
@@ -126,13 +125,16 @@ const send = async () => {
                 <p>No messages yet</p>
               </span>
             </div>  ):
-         (messages.map(m => (
-            <div key={m.id} className={`flex ${m.mine ? 'justify-end' : 'justify-start'}`}>
-              <span className={`max-w-[65%] px-3 py-1.5 rounded-lg shadow-sm wrap-break-word ${m.mine ? 'bg-[#d9fdd3]' : 'bg-white'}`}>
-                {m.text}
-              </span>
-            </div>
-          )) )
+         (messages.map(m => {
+  const mine = m.senderId === user?.id
+  return (
+    <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+      <span className={`max-w-[65%] px-3 py-1.5 rounded-lg shadow-sm wrap-break-words ${mine ? 'bg-[#d9fdd3]' : 'bg-white'}`}>
+        {m.content}
+      </span>
+    </div>
+  )
+}))
           
         }
         <div ref={bottomRef} />
