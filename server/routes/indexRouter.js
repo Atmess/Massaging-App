@@ -87,12 +87,17 @@ router.post("/login", (req, res, next) => {
   })(req, res, next);
 });
 
-router.get("/log-out", (req, res, next) => {
+router.post("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
-    res.json({ message: "Logged out successfully!" });
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      res.clearCookie("connect.sid");
+      res.json({ message: "Logged out successfully!" });
+    });
   });
 });
+
 
 router.get("/current-user", (req, res) => {
   if (req.isAuthenticated && req.isAuthenticated()) {
@@ -102,7 +107,7 @@ router.get("/current-user", (req, res) => {
   }
 });
 
-router.post('/messages/new',messageController.findReceiver)
+
 // ==========================================
 // --- PROTECTED CHAT & MESSAGE ROUTES ---
 // ==========================================
@@ -113,14 +118,14 @@ router.use(isAuthenticated);
 // User Profile
 router.get('/users/me', authController.getCurrentUser);
 router.patch('/users/profile', FilterFile, authController.updateProfile);
-
+router.post('/messages/find',chatController.findReceiver)
 // Chat Rooms / Conversations
 router.get('/chats', chatController.getUserChats);           
 router.post('/chats', chatController.createPrivateChat);     
 router.get('/chats/find', chatController.getChatWithUser);   
 
 // Messages
-router.get('/messages/:chatId', messageController.getMessagesForChat); 
+router.get('/messages/:chatId', messageController.getChatMessages); 
 router.post('/messages', FilterFile, messageController.sendMessage);   
 
 module.exports = router;

@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import API_BASE_URL from '../config';
 
 const AuthContext = createContext(null);
 
-const API_BASE_URL = 'http://localhost:8080'; // Adjust to your backend URL
+// Adjust to your backend URL
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -35,8 +36,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (userData) => {
-    // Session cookie is already set by the backend response header
-    setUser(userData);
+    // Backend returns { message, user: { id, username, email } }
+    // Extract just the user object so user.id works immediately after login
+    setUser(userData.user || userData);
   };
 
   const updateUser = (updatedUser) => {

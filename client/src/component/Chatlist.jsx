@@ -66,7 +66,7 @@ export default function ChatList({onSelectChat}) {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/messages/new`, {
+      const response = await fetch(`${API_BASE_URL}/api/messages/find`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -123,8 +123,8 @@ export default function ChatList({onSelectChat}) {
            </div>
         )}
 
-        {chats.map((chat) => (
-          <div onClick={()=>onSelectChat(chat.id)} key={chat.id} className="p-3 border-b border-stone-100">
+        {user && chats.map((chat , index) => (
+          <div onClick={()=>onSelectChat(chats[index])} key={chat.id} className="p-3 border-b border-stone-100">
             <h3>{getChatDisplayName(chat, user.id)}</h3>
             <p>{chat.messages[0]?.content}</p>
             
@@ -237,7 +237,7 @@ export default function ChatList({onSelectChat}) {
         </div>
         <div>
           <form onSubmit={handleCreateNewMessage} className="p-4 space-y-4 bg-white">
-      <h2 className="text-lg font-bold">New Message</h2>
+      <h2 className="text-lg font-bold">Find reciver</h2>
 
       {/* Recipient ID / Number Input */}
       <div>

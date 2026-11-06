@@ -25,14 +25,12 @@ export default function Login() {
       });
 
       const data = await response.json();
-      login(data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Save JWT token received from backend
-      localStorage.setItem('token', data.token);
+      login(data);
 
       // Redirect to posts feed
       navigate('/');

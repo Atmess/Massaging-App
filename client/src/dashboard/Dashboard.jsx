@@ -32,16 +32,14 @@ export default function Dashboard() {
   const [schedulingPostId, setSchedulingPostId] = useState(null);
   const [scheduledDate, setScheduledDate] = useState('');
 
-  const token = localStorage.getItem('token');
-
   // 1. FETCH POSTS DEPENDING ON ACTIVE TAB
-  useEffect(() => {
-    fetchPosts();
-  }, [activeTab]);
+useEffect(() => {
+  let ignore = false;
 
-  const fetchPosts = async () => {
+  const load = async () => {
     setLoading(true);
     setError('');
+    setPosts([]); // avoid showing drafts under the "published" tab for a moment
 
     const endpoint =
       activeTab === 'drafts'
@@ -49,22 +47,20 @@ export default function Dashboard() {
         : `${API_BASE_URL}/api/post/userpublished`;
 
     try {
-      const response = await fetch(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const response = await fetch(endpoint, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to load posts');
       const data = await response.json();
-      setPosts(data);
+      if (!ignore) setPosts(data);
     } catch (err) {
-      setError(err.message);
+      if (!ignore) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!ignore) setLoading(false);
     }
   };
 
+  load();
+  return () => { ignore = true; };
+}, [activeTab]);
   // 2. CREATE OR UPDATE POST
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,9 +90,7 @@ export default function Dashboard() {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
         body: data,
       });
 
@@ -115,26 +109,24 @@ export default function Dashboard() {
   };
 
   // 3. PUBLISH DRAFT
-  const handlePublishDraft = async (postId) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/post/${postId}/publishdraft`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await response.json();
-      console.log(data);
-      if (!response.ok)
-        throw new Error(data.message || 'Failed to publish draft ');
-      fetchPosts();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+const handlePublishDraft = async (postId) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/post/${postId}/publishdraft`,
+      {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}), // or whatever your backend expects for "publish now"
+      }
+    );
+
+    if (!response.ok) throw new Error('Failed to publish post');
+    fetchPosts();
+  } catch (err) {
+    alert(err.message);
+  }
+};
 
   // 4. SCHEDULE POST
   const handleSchedule = async (e) => {
@@ -146,9 +138,9 @@ export default function Dashboard() {
         `${API_BASE_URL}/api/post/${schedulingPostId}/publishdraft`,
         {
           method: 'PATCH',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             publishTime: scheduledDate,
@@ -168,14 +160,12 @@ export default function Dashboard() {
 
   // 5. DELETE POST
   const handleDeletePost = async (postId) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/post/${postId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
       const data = await response.json();
       if (!response.ok)

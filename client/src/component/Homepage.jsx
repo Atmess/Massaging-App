@@ -10,7 +10,6 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const token = localStorage.getItem('token');
   const [visibleCount, setVisibleCount] = useState(6); // Starts showing 6 posts
   const handleLoadMore = () => {
     setVisibleCount((prevCount) => prevCount + 6);
@@ -22,9 +21,7 @@ export default function Home() {
         const response = await fetch(
           `${API_BASE_URL}/api/post/getAllPublish`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: 'include',
           }
         );
 

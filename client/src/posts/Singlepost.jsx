@@ -14,8 +14,6 @@ export default function SinglePostView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null); // Tracks which comment is being edited
   const [editText, setEditText] = useState(''); // Tracks the text in the edit textarea
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     const fetchSinglePost = async () => {
       try {
@@ -41,14 +39,11 @@ export default function SinglePostView() {
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(
         `${API_BASE_URL}/api/comments/${commentId}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         }
       );
 
@@ -66,14 +61,13 @@ export default function SinglePostView() {
     if (!editText.trim()) return;
 
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(
         `${API_BASE_URL}/api/comments/${commentId}`,
         {
-          method: 'PATCH', // or 'PATCH' depending on what you chose
+          method: 'PATCH',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ content: editText }),
         }
@@ -106,9 +100,9 @@ export default function SinglePostView() {
         `${API_BASE_URL}/api/post/${id}/comments`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // Include if comments require login
           },
           body: JSON.stringify({ content: newComment }),
         }

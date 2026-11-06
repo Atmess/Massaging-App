@@ -16,8 +16,6 @@ export default function ProfilePage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
-  const token = localStorage.getItem('token');
-
   // States for user's posts
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -60,13 +58,10 @@ export default function ProfilePage() {
       setPostError('');
 
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch(
           `${API_BASE_URL}/api/post/userpublished`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: 'include',
           }
         );
 
@@ -94,9 +89,7 @@ export default function ProfilePage() {
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/user/file`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         });
 
         if (!response.ok) throw new Error('Failed to load your files');
@@ -131,10 +124,10 @@ export default function ProfilePage() {
   //download File
   const handleDownload = async (fileId, fileName) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(
         `${API_BASE_URL}/api/download/${fileId}`,
         {
+          credentials: 'include',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -169,13 +162,12 @@ export default function ProfilePage() {
   //remove file
   const handleDeleteFile = async (fileId) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(
         `${API_BASE_URL}/api/files/${fileId}`,
         {
           // your real delete route
           method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         }
       );
       if (!response.ok) {
@@ -197,7 +189,6 @@ export default function ProfilePage() {
     setMessage({ text: '', type: '' });
 
     try {
-      const token = localStorage.getItem('token');
       const data = new FormData();
       data.append('name', formData.name);
       data.append('username', formData.username);
@@ -208,9 +199,7 @@ export default function ProfilePage() {
 
       const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
         body: data,
       });
 
