@@ -14,8 +14,6 @@ export default function SideHeader() {
 
   const navItems = [
     { name: 'Home', path: '/', icon: home },
-    { name: 'Dashboard', path: '/dashboard', icon: dashboard },
-    { name: 'Post', path: '/posts', icon: task },
     { name: 'Card', path: '/shop', icon: card },
     { name: 'Message', path: '/message', icon: message },
   ];

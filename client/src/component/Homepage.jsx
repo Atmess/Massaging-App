@@ -69,10 +69,10 @@ export default function Home() {
                   Write a Post
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/message"
                   className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-6 py-3 rounded-lg transition"
                 >
-                  Go to Dashboard
+                  Go to message
                 </Link>
               </>
             ) : (
