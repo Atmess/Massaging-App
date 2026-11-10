@@ -6,6 +6,7 @@ const prisma = require("../lib/prisma");
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://192.168.1.37:5173",
+  "https://massaging-app-teal.vercel.app/"
 ];
 
 const MAX_MESSAGE_LENGTH = 4000;

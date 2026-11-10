@@ -18,7 +18,8 @@ const PORT = process.env.PORT || 8080;
 app.use(
   cors({
     origin: ["http://localhost:5173",
-              'http://192.168.1.37:5173'
+              'http://192.168.1.37:5173',
+              'https://massaging-app-teal.vercel.app'
     ],
              // Vite's default local development port
     credentials: true,             // Required for sessions/cookies to pass through
