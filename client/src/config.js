@@ -1,7 +1,7 @@
 ﻿
 
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://backend-blog-api-o2wd.onrender.com' // 👈 Replace with your actual Render URL when ready
+  ? 'https://massaging-app-wn9s.onrender.com' // 👈 Replace with your actual Render URL when ready
   : '';
 
 const getSocketBaseUrl = () => {
@@ -9,7 +9,7 @@ const getSocketBaseUrl = () => {
     return import.meta.env.VITE_SOCKET_URL;
   }
   if (import.meta.env.PROD) {
-    return 'https://backend-blog-api-o2wd.onrender.com';
+    return 'https://massaging-app-wn9s.onrender.com';
   }
   // Dev: connect to backend on the same host as the page so the
   // connect.sid session cookie is sent (localhost for PC, IP for phone).
