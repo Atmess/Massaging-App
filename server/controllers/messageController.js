@@ -98,16 +98,13 @@ const getMessagesWithUser = async (req, res, next) => {
 const sendMessage = async (req, res, next) => {
   try {
     const senderId = req.user?.id;
-    const { chatId, content } = req.body;
-    console.log(senderId)
-    console.log(req.body)
-
+    const { chatId } = req.body;
+    const content = req.body.content?.trim();
 
     if (!senderId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    // Validate that content and a receiver exist
-    if (!chatId || !content?.trim()) {
+    if (!chatId || !content) {
       return res.status(400).json({ message: 'chatId and content are required' });
     }
 
@@ -118,29 +115,19 @@ const sendMessage = async (req, res, next) => {
       return res.status(403).json({ message: 'You are not part of this chat' });
     }
 
-
-
-    const userSelect = { id: true, username: true, email: true, avatarUrl: true };
-
-    let chat = await prisma.chat.findFirst({
-      where:{id:chatId}
-    })
-
     const newMessage = await prisma.message.create({
-      data:{
-        content,
-        senderId,
-        chatId:chat.id
-      },
-      include:{sender:{select:userSelect}}
-    })
-    
+      data: { content, senderId, chatId },
+      include: { sender: { select: { id: true, username: true, avatarUrl: true } } },
+    });
+
+    // push to everyone who joined this chat's room
+    req.app.get('io').to(chatId).emit('newMessage', newMessage);
+
     res.status(201).json(newMessage);
   } catch (error) {
     next(error);
   }
 };
-
 
 
 const getallforUser = async (req, res, next) => {

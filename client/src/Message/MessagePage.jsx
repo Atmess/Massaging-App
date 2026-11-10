@@ -2,12 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 import home from '../assets/picture/live-twin-home.png'
 import image from '../assets/picture/live-twin-image.jpg'
 import API_BASE_URL from '../config'
+import { SOCKET_BASE_URL } from '../config'
 import { useAuth } from '../context/AuthContext'
+import { useSocket } from '../context/SocketContext'
 import logo from '../assets/picture/image1.png';
 
 const bgImages = [home, image]
 export default function Chat({chat}) {
   const {user} = useAuth()
+  const { socket, connected, joinChat, leaveChat, sendMessage } = useSocket()
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState('')
@@ -16,6 +19,23 @@ const pick = () => bgImages[Math.floor(Math.random() * bgImages.length)]
 const [bgimage, setbgimage] = useState(() => pick())
 
 const other = chat?.participants?.find(p => p.user.id !== user?.id)?.user
+
+useEffect(() => {
+  if (!socket || !connected || !chat?.id) return
+
+  joinChat(chat.id)
+
+  const onNew = (msg) => {
+    if (msg.chatId !== chat.id) return
+    setMessages(m => m.some(x => x.id === msg.id) ? m : [...m, msg])
+  }
+
+  socket.on('newMessage', onNew)   // must match the event name your server emits
+  return () => {
+    socket.off('newMessage', onNew)
+    leaveChat(chat.id)
+  }
+}, [socket, connected, chat?.id])
 
 useEffect(() => {
   if (!chat?.id){ 
@@ -57,35 +77,49 @@ useEffect(() => {
 
 const send = async () => {
     if (!text.trim()) return;
+    if (!socket || !connected) {   // was: if (!socket)
+  console.error('Socket not connected')
+  return
+}
 
     const messageText = text;
     setText(''); // Clear the input right away for smooth typing
 
-    // 1. Instantly show it on screen (Optimistic UI update)
+    // 1. Optimistic UI update (shown instantly)
+    const tempId = 'opt_' + Date.now();
+    const optimistic = {
+      id: tempId,
+      content: messageText,
+      senderId: user.id,
+      sender: user,
+      createdAt: new Date().toISOString(),
+      chatId: chat.id,
+    };
+    setMessages(m => [...m, optimistic]);
 
     try {
-      // 2. Send it to your Express backend
-      const response = await fetch(`${API_BASE_URL}/api/messages`, {
-        method: 'POST',
-        credentials: 'include', // Crucial for sending your session cookie
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chatId: chat.id, // The target user's ID
-          content: messageText, // The message content
-        }),
+      // 2. Send via WebSocket: the server persists it and broadcasts to the room
+      const savedMessage = await new Promise((resolve, reject) => {
+        sendMessage(chat.id, messageText, undefined, (res) => {
+          if (!res || !res.ok) {
+            return reject(new Error(res?.error || 'Failed to send message'));
+          }
+          resolve(res.message);
+         
+        });
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to save message to database');
-      }
-
-      const savedMessage = await response.json();
-      setMessages(m => [...m, savedMessage])
-      console.log('Message saved successfully:', savedMessage);
+      // Replace the optimistic message with the persisted message from the server
+      setMessages(m =>
+  m.some(x => x.id === savedMessage.id)
+    ? m.filter(x => x.id !== tempId)                       // listener already added it
+    : m.map(x => (x.id === tempId ? savedMessage : x))
+)
+      console.log('Message sent via WebSocket:', savedMessage);
     } catch (err) {
       console.error('Error sending message:', err);
+      // Roll back the optimistic message on failure
+      setMessages(m => m.filter(msg => msg.id !== tempId));
+      setText(messageText)
     }
   };
 
@@ -114,9 +148,8 @@ const send = async () => {
     <span>{other.username}</span>
   </header>
 )}
-      
+    <button onClick={()=>{console.log(user)} }>test</button>
 
-<button onClick={()=>console.log(chat)}>test</button>
       <main className="flex-1 overflow-y-auto px-8 py-4 space-y-2">
         { loading? (<p>Loading...</p>):
          messages.length === 0 ? 
@@ -142,7 +175,6 @@ const send = async () => {
       <div className='bg-white'>
         </div>
       <div className="h-16 shrink-0  px-16 flex items-center">
-        <button onClick={()=>{console.log(messages)}} >test</button>
         <input
           value={text}
           onChange={e => setText(e.target.value)}

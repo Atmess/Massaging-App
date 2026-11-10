@@ -15,7 +15,10 @@ const PORT = process.env.PORT || 8080;
 // --- CORS CONFIG (Allows React frontend to talk to Express) ---
 app.use(
   cors({
-    origin: "http://localhost:5173", // Vite's default local development port
+    origin: ["http://localhost:5173",
+              'http://192.168.1.37:5173'
+    ],
+             // Vite's default local development port
     credentials: true,             // Required for sessions/cookies to pass through
   })
 );
@@ -28,23 +31,27 @@ app.use(express.urlencoded({ extended: true })); // Parses URL-encoded form data
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // --- SESSION CONFIG (Using your Prisma Session Store) ---
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "cats",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === "production", // true on Render, false locally
-      sameSite: "lax"
-    },
-    store: new PrismaSessionStore(prisma, {
-      checkPeriod: 2 * 60 * 1000, // Cleans up expired sessions every 2 minutes
-      dbRecordIdIsSessionId: true,
-      dbRecordIdFunction: undefined,
-    }),
-  })
-);
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || "cats",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
+  store: new PrismaSessionStore(prisma, {
+    checkPeriod: 2 * 60 * 1000, // Cleans up expired sessions every 2 minutes
+    dbRecordIdIsSessionId: true,
+    dbRecordIdFunction: undefined,
+  }),
+});
+app.use(sessionMiddleware);
+
+// --- SOCKET.IO (real-time messaging) ---
+const { initSocket, getIO } = require("./sockets/chatSocket");
+initSocket(server, sessionMiddleware);
+app.set("io", getIO());
 
 // --- PASSPORT INITIALIZATION ---
 app.use(passport.session());
@@ -61,7 +68,7 @@ app.use((err, req, res, next) => {
 });
 
 // --- START SERVER ---
-server.listen(PORT, (error) => {
+server.listen(PORT,'0.0.0.0',(error) => {
   if (error) throw error;
   console.log(`Messaging App backend listening on port ${PORT}!`);
 });

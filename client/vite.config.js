@@ -10,6 +10,17 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],
+  // Proxy API requests to the backend so the browser sees them as same-origin.
+  // This fixes SameSite=Lax cookie issues when frontend (port 5173) and backend (port 8080)
+  // are on different origins.
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://192.168.1.37:8080',
+        changeOrigin: true,
+      },
+    },
+  },
    test: {
     global:true,
     environment: 'jsdom',
