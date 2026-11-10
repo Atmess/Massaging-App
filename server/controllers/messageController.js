@@ -1,4 +1,4 @@
-const prisma = require("../../lib/prisma")
+const prisma = require("../lib/prisma")
 
 const GetallMessage = async (req,res,next) => {
   const userId = req.user?.id

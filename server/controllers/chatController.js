@@ -1,4 +1,4 @@
-const prisma = require("../../lib/prisma");
+const prisma = require("../lib/prisma");
 
 const userSelect = { id: true, username: true, avatarUrl: true };
 const getUserChats = async (req, res, next) => {

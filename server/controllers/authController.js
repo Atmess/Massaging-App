@@ -1,5 +1,5 @@
 const { validationResult } = require("express-validator");
-const prisma = require("../../lib/prisma");
+const prisma = require("../lib/prisma");
 const bcrypt = require("bcryptjs")
 
 const createUserPost = async (req, res, next) => {
