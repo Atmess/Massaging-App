@@ -6,7 +6,9 @@ const http = require("http");
 const passport = require("./config/passport");
 const { PrismaSessionStore } = require("@quixo3/prisma-session-store");
 const session = require("express-session");
+const { initSocket, getIO } = require("./sockets/chatSocket");
 const prisma = require("./lib/prisma");
+
 const indexRouter = require("./routes/indexRouter");
 
 const app = express();
@@ -49,7 +51,7 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 // --- SOCKET.IO (real-time messaging) ---
-const { initSocket, getIO } = require("./sockets/chatSocket");
+
 initSocket(server, sessionMiddleware);
 app.set("io", getIO());
 

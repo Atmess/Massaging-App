@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
-const prisma = require("../../lib/prisma.js");
+const prisma = require("../lib/prisma");
+
 
 // Frontend origins allowed to connect (must match the Express CORS config in app.js)
 const ALLOWED_ORIGINS = [
