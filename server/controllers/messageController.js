@@ -1,5 +1,8 @@
 const prisma = require("../lib/prisma")
 
+const userSelect = { id: true, username: true, name: true, email: true, avatarUrl: true } // <-- add name
+
+
 const GetallMessage = async (req,res,next) => {
   const userId = req.user?.id
 
@@ -17,8 +20,8 @@ const GetallMessage = async (req,res,next) => {
       select: {
         senderId:true,
         receiverId:true,
-        sender: { select: { id: true, username: true, email: true, avatarUrl: true } },
-        receiver: { select: { id: true, username: true, email: true, avatarUrl: true } },
+        sender: { select: userSelect },
+        receiver: { select: userSelect },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -51,8 +54,8 @@ const getConversations = async (req, res, next) => {
       select: {
         senderId:true,
         receiverId:true,
-        sender: { select: { id: true, username: true, email: true, avatarUrl: true } },
-        receiver: { select: { id: true, username: true, email: true, avatarUrl: true } },
+        sender: { select: userSelect},
+        receiver: { select: userSelect },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -117,7 +120,7 @@ const sendMessage = async (req, res, next) => {
 
     const newMessage = await prisma.message.create({
       data: { content, senderId, chatId },
-      include: { sender: { select: { id: true, username: true, avatarUrl: true } } },
+      include: { sender: { select: userSelect } },
     });
 
     // push to everyone who joined this chat's room
@@ -134,7 +137,7 @@ const getallforUser = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
       where: { id: { not: req.user?.id } },
-      select: { id: true, username: true, email: true },
+      select: userSelect,
     });
     res.json(users);
   } catch (err) {
@@ -165,7 +168,7 @@ const getChatMessages = async (req, res, next) => {
             where: { chatId },
             orderBy: { createdAt: 'asc' },
             include: {
-                sender: { select: { id: true, username: true, avatarUrl: true } }
+                sender: { select: userSelect }
             }
         });
 

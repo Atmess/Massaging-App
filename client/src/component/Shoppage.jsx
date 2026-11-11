@@ -8,8 +8,8 @@ export default function Shop() {
   const [maindeck, setmain] = useState([]);
   const [extradeck, setextra] = useState([]);
   return (
-    <div>
-      <nav className="flex justify-center gap-2 flex-wrap md:gap-4 p-4">
+    <div className='h-screen w-full overflow-y-auto' >
+      <nav className="flex  justify-center gap-2 flex-wrap md:gap-4 p-4">
         <Link
           to="/shop/"
           className=" bg-blue-500 text-white rounded hover:bg-blue-800 transition px-1 py-1 md:px-4 md:py-2 "

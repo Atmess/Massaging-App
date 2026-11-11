@@ -14,6 +14,7 @@ datasource db {
 
 model User {
   id            String         @id @default(uuid())
+  name          String?        @default("")
   username      String         @unique
   email         String         @unique
   passwordHash  String
@@ -55,7 +56,10 @@ model ChatParticipant {
 model Message {
   id            String         @id @default(uuid())
   content       String         // The text message or media link
-  mediaUrl      String?        // Optional: for images, videos, or files
+  mediaUrl      String?
+  mediaType     String?        // e.g. "image/png"
+  mediaName     String?        // original filename
+  mediaSize     Int?           // bytes
   createdAt     DateTime       @default(now())
 
   // Foreign Keys

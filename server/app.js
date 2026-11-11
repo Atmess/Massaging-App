@@ -10,6 +10,7 @@ const { initSocket, getIO, ALLOWED_ORIGINS } = require("./sockets/chatSocket");
 const prisma = require("./lib/prisma");
 
 const indexRouter = require("./routes/indexRouter");
+const { cookie } = require("express-validator");
 
 const app = express();
 const server = http.createServer(app); // Wrapped for Socket.io later!
@@ -26,7 +27,7 @@ app.use(
 // --- BODY PARSERS ---
 app.use(express.json());                  // Parses JSON request bodies from React
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded form data
-console.log("NODE_ENV:", process.env.NODE_ENV);
+
 // --- STATIC FILE SERVING (for media/attachment uploads) ---
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -35,7 +36,7 @@ const isProd = process.env.NODE_ENV === "production";
 if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET is not set");
 }
-
+console.log("NODE_ENV:", process.env.NODE_ENV, "| isProd:", isProd);
 // Must come BEFORE the session middleware: Render terminates HTTPS at its proxy
 if (isProd) app.set("trust proxy", 1);
 

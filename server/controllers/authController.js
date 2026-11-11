@@ -44,14 +44,62 @@ const getCurrentUser = async (req, res, next) => {
   return res.status(401).json({ isAuthenticated: false });
 };
 
-const updateProfile = async (req,res,next) => {
-    const body = req.body
-    const user = req.user
-    const params = req.params
+const updateProfile = async (req, res, next) => {
+    try {
+        const userId = parseInt(req.user.id, 10);
+        const { name, username } = req.body;
+        const fileData = req.savedFileData; // Whatever your storage middleware populates
+      
+        
+        // 1. Fetch current user to get existing avatarUrl if no new file is uploaded
+        const currentUser = await prisma.user.findUnique({
+            where: { id: userId },
+        });
 
-    console.log(body)
-    console.log(user)
-    console.log(params)
-}
+        if (!currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        let newAvatarUrl = currentUser.avatarUrl;
+
+        // 2. If a new file was uploaded, save or extract its URL
+        if (fileData) {
+            // Option A: If your storage middleware already gives you a public URL string:
+            newAvatarUrl = fileData.url;
+          
+            // Option B: If you want to log it to your `File` table in Prisma:
+             await prisma.file.create({
+            data: {
+            name: fileData.name,
+            size: fileData.size,
+            url: fileData.url,
+            user:{connect:{id:userId}}
+          },
+        });
+        }
+
+        // 3. Update the user record
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                name: name !== undefined ? name : currentUser.name,
+                username: username !== undefined ? username : currentUser.username,
+                avatarUrl: newAvatarUrl,
+            },
+        });
+
+        // 4. Send back the updated user (exclude password for safety!)
+        const { password, ...userWithoutPassword } = updatedUser;
+        res.status(200).json(userWithoutPassword);
+
+    } catch (error) {
+        console.error('Error updating user:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ message: 'Username is already taken.' });
+        }
+        next(error);
+    }
+};
+
 
 module.exports = ({createUserPost,getCurrentUser,updateProfile})

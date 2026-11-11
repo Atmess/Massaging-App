@@ -1,4 +1,3 @@
-import ChatList from './component/Chatlist';
 import SideHeader from './component/Haeder';
 import Mainpage from './component/Mainpage';
 

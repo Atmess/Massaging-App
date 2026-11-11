@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController'); 
-const chatController = require('../controllers/chatController');   
+const chatController = require('../controllers/chatController');  
+const fileController = require('../controllers/fileController'); 
 const messageController = require('../controllers/messageController'); 
 const multer = require('multer');
 const path = require('path');
@@ -10,38 +11,31 @@ const { body } = require("express-validator");
 const passport = require("../config/passport");
 
 // --- MULTER CONFIG FOR CHAT ATTACHMENTS ---
-const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'application/msword',
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf', 'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-  'application/zip'
-];
+  'text/plain', 'application/zip',
+]);
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
-  fileFilter: (req, file, cb) => {
-    const fileExt = path.extname(file.originalname).toLowerCase();
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype) || ['.jpg', '.jpeg', '.png', '.pdf'].includes(fileExt)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type.'), false);
-    }
-  }
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (req, file, cb) =>
+    ALLOWED_MIME_TYPES.has(file.mimetype)
+      ? cb(null, true)
+      : cb(new Error('Invalid file type.')),
 });
 
 const FilterFile = (req, res, next) => {
   upload.single("file")(req, res, (err) => {
-    if (err) return res.status(400).json({ message: err.message });
-    next();
+    if (!err) return next();
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({ message: "File too large (max 10 MB)" });
+    }
+    return res.status(400).json({ message: err.message });
   });
 };
-
 // --- SESSION AUTH MIDDLEWARE ---
 const isAuthenticated = (req, res, next) => {
   // Passport automatically attaches req.isAuthenticated() and req.user

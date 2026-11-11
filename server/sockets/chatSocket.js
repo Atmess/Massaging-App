@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS = [
 const MAX_MESSAGE_LENGTH = 4000;
 
 // Public fields only. Don't broadcast emails to other chat participants.
-const SENDER_SELECT = { id: true, username: true, avatarUrl: true };
+const SENDER_SELECT = { id: true, username: true, name: true, avatarUrl: true };
 
 let io = null;
 
@@ -89,7 +89,7 @@ function initSocket(httpServer, sessionMiddleware) {
       try {
         const user = await prisma.user.findUnique({
           where: { id: userId },
-          select: { id: true, username: true, email: true, avatarUrl: true },
+          select: { id: true, username: true, name: true, email: true, avatarUrl: true },
         });
         socket.user = user || { id: userId };
       } catch (dbErr) {

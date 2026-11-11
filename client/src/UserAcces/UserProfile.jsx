@@ -235,7 +235,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-500 text-slate-100 p-6 sm:p-12 space-y-8">
+    <div className="h-screen w-full overflow-y-auto bg-slate-500 text-slate-100 p-6 sm:p-12 space-y-8">
       {/* Profile Section Box */}
       <div className="max-w-xl mx-auto bg-slate-800/60 border border-slate-700/80 rounded-2xl p-8 shadow-xl space-y-6">
         {message.text && (
@@ -297,6 +297,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium text-white">
                   {user.role}
                 </span>
+                <button onClick={()=>console.log(user)}>test</button>
               </div>
               <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-700/40">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -494,7 +495,7 @@ export default function ProfilePage() {
       <div className="max-w-6xl w-full mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-white">
-            My Photo
+            My File
           </h2>
         </div>
 

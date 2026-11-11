@@ -1,6 +1,6 @@
 const prisma = require("../lib/prisma");
 
-const userSelect = { id: true, username: true, avatarUrl: true };
+const userSelect = { id: true, username: true, name: true, avatarUrl: true } // <-- add name
 const getUserChats = async (req, res, next) => {
     // Make sure your Passport user object property matches your schema (e.g., req.user.id)
     const userId = req.user?.id;
@@ -93,7 +93,7 @@ const createPrivateChat = async (req, res, next) => {
             include: {
                 participants: {
                     include: {
-                        user: { select: { id: true, username: true, avatarUrl: true } }
+                        user: { select: { id: true, username: true, name: true, avatarUrl: true } }
                     }
                 }
             }
