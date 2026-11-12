@@ -104,13 +104,17 @@ const sendMessage = async (req, res, next) => {
     const { chatId } = req.body;
     const content = req.body.content?.trim();
 
+      console.log(chatId)
+      console.log(content)
     if (!senderId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    if (!chatId || !content) {
-      return res.status(400).json({ message: 'chatId and content are required' });
+    if (!chatId ) {
+      return res.status(400).json({ message: 'chatId are required' });
     }
-
+    if(!content){
+      return res.status(400).json({ message: 'content are required' });
+    }
     const participant = await prisma.chatParticipant.findFirst({
       where: { chatId, userId: senderId },
     });

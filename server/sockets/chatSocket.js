@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const prisma = require("../lib/prisma");
+const { isOwnMediaUrl } = require("../controllers/fileController");
 
 
 // Frontend origins allowed to connect (must match the Express CORS config in app.js)
@@ -136,57 +137,47 @@ function initSocket(httpServer, sessionMiddleware) {
     });
 
     // ---------- send a message: persist + broadcast ----------
-    socket.on("sendMessage", async (payload, cb) => {
-      const reply = typeof cb === "function" ? cb : () => {};
-      try {
-        const { chatId, content, mediaUrl } = payload || {};
-        const text = typeof content === "string" ? content.trim() : "";
+socket.on("sendMessage", async (payload, cb) => {
+  const reply = typeof cb === "function" ? cb : () => {};
+  try {
+    const { chatId, content, mediaUrl } = payload || {};
+    const text = typeof content === "string" ? content.trim() : "";
+    const media = isOwnMediaUrl(mediaUrl) ? mediaUrl : undefined;
 
-        if (!chatId || !text) {
-          throw new Error("chatId and content are required");
-        }
-        if (text.length > MAX_MESSAGE_LENGTH) {
-          throw new Error(`Message is too long (max ${MAX_MESSAGE_LENGTH} characters)`);
-        }
-        if (!(await isParticipant(chatId, socket.userId))) {
-          return reply({ ok: false, error: "You are not part of this chat" });
-        }
+    if (!chatId || (!text && !media)) {
+      throw new Error("chatId and content or media are required");
+    }
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      throw new Error(`Message is too long (max ${MAX_MESSAGE_LENGTH} characters)`);
+    }
+    if (!(await isParticipant(chatId, socket.userId))) {
+      return reply({ ok: false, error: "You are not part of this chat" });
+    }
 
-        const message = await prisma.message.create({
-          data: {
-            content: text,
-            senderId: socket.userId,
-            chatId,
-            mediaUrl: typeof mediaUrl === "string" ? mediaUrl : undefined,
-          },
-          include: { sender: { select: SENDER_SELECT } },
-        });
-
-        // Everyone in the chat room EXCEPT this socket gets the message live.
-        // The sender gets it through the ack callback below.
-        socket.to(chatId).emit("newMessage", message);
-
-        // Confirm to the sender right away; the notifications below can't fail the send
-        reply({ ok: true, message });
-
-        // Tell every participant (on all devices) so chat lists / unread badges update
-        try {
-          const participants = await prisma.chatParticipant.findMany({
-            where: { chatId },
-            select: { userId: true },
-          });
-          for (const { userId } of participants) {
-            io.to(userRoom(userId)).emit("chatUpdated", { chatId, lastMessage: message });
-          }
-        } catch (notifyErr) {
-          console.error("[socket] chatUpdated error:", notifyErr.message);
-        }
-      } catch (err) {
-        console.error("[socket] sendMessage error:", err.message);
-        reply({ ok: false, error: err.message });
-      }
+    const message = await prisma.message.create({
+      data: { content: text, senderId: socket.userId, chatId, mediaUrl: media },
+      include: { sender: { select: SENDER_SELECT } },
     });
 
+    socket.to(chatId).emit("newMessage", message);
+    reply({ ok: true, message });
+
+    try {
+      const participants = await prisma.chatParticipant.findMany({
+        where: { chatId },
+        select: { userId: true },
+      });
+      for (const { userId } of participants) {
+        io.to(userRoom(userId)).emit("chatUpdated", { chatId, lastMessage: message });
+      }
+    } catch (notifyErr) {
+      console.error("[socket] chatUpdated error:", notifyErr.message);
+    }
+  } catch (err) {
+    console.error("[socket] sendMessage error:", err.message);
+    reply({ ok: false, error: err.message });
+  }
+});
     // ---------- typing indicators (only for rooms this socket has joined) ----------
     socket.on("typing", (payload) => {
       const chatId = readChatId(payload);

@@ -1,4 +1,4 @@
-const multer = require("multer");
+
 const { createClient } = require("@supabase/supabase-js");
 const prisma = require("../lib/prisma");
 // no require("dotenv").config() here: app.js already loads dotenv/config
@@ -41,16 +41,6 @@ async function removeMediaByUrl(url) {
 
 // ---------- receive the file (multer) ----------
 
-// Wrapper so multer errors become clean JSON responses
-const receiveFile = (req, res, next) => {
-  upload.single("file")(req, res, (err) => {
-    if (!err) return next();
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(413).json({ message: "File too large (max 10 MB)" });
-    }
-    return res.status(400).json({ message: err.message });
-  });
-};
 
 // ---------- upload handler: POST /api/upload (multipart: file + chatId) ----------
 

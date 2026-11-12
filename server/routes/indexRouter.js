@@ -120,6 +120,9 @@ router.get('/chats/find', chatController.getChatWithUser);
 
 // Messages
 router.get('/messages/:chatId', messageController.getChatMessages); 
-router.post('/messages', FilterFile, messageController.sendMessage);   
+router.post('/messages', FilterFile, messageController.sendMessage);
+
+//upload
+router.post('/upload' , FilterFile , fileController.uploadMedia)
 
 module.exports = router;
