@@ -111,7 +111,7 @@ router.use(isAuthenticated);
 
 // User Profile
 router.get('/users/me', authController.getCurrentUser);
-router.patch('/users/profile', FilterFile, authController.updateProfile);
+router.patch('/users/profile', FilterFile, fileController.uploadToStorage,fileController.testing , authController.updateProfile);
 router.post('/messages/find',chatController.findReceiver)
 // Chat Rooms / Conversations
 router.get('/chats', chatController.getUserChats);           

@@ -26,6 +26,7 @@ model User {
   // Relations
   chats         ChatParticipant[]
   messages      Message[]
+  file          File[]
 }
 
 model Chat {
@@ -71,6 +72,20 @@ model Message {
   chat          Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
 
+
+model File {
+  id         String   @id @default(uuid())
+  name       String
+  size       Int
+  url        String
+  type       String?
+  path       String?   // Supabase storage path, needed for deleting later
+  uploadTime DateTime @default(now())
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+}
 model Session {
   id        String   @id
   sid       String   @unique

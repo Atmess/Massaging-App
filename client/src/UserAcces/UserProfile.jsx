@@ -194,7 +194,7 @@ export default function ProfilePage() {
       data.append('username', formData.username);
 
       if (avatarFile) {
-        data.append('upload', avatarFile);
+        data.append('file', avatarFile);
       }
 
       const response = await fetch(`${API_BASE_URL}/api/users/profile`, {

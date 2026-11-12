@@ -84,4 +84,46 @@ const uploadMedia = async (req, res, next) => {
   }
 };
 
-module.exports = {  uploadMedia, isOwnMediaUrl, removeMediaByUrl };
+const uploadToStorage = async (req, res, next) => {
+  try {
+    const file= req.file
+    // If no file was sent, just move on (avatar is optional)
+    if (!file) return next();
+
+
+    const storagePath = `${Date.now()}-${sanitizeFilename(file.originalname)}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(storagePath, file.buffer, { contentType: file.mimetype, upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
+
+    console.log(data)
+    req.savedFileData = {
+      name: req.file.originalname,
+      size: req.file.size,
+      url: data.publicUrl, // or whatever your provider returns
+      type: file.mimetype,
+    };
+
+    next();
+  } catch (err) {
+    next(err); // pass errors to your error handler
+  }
+}; 
+
+const testing = async (req,res,next)=>{
+  const body = req.body
+  const user = req.user
+  const file = req.file
+
+  console.log(body)
+  console.log(user)
+  console.log(file)
+
+  next()
+}
+
+module.exports = {  uploadMedia, isOwnMediaUrl, removeMediaByUrl ,testing ,uploadToStorage};

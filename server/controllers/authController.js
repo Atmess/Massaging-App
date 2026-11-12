@@ -46,10 +46,12 @@ const getCurrentUser = async (req, res, next) => {
 
 const updateProfile = async (req, res, next) => {
     try {
-        const userId = parseInt(req.user.id, 10);
+        const userId = req.user.id
         const { name, username } = req.body;
         const fileData = req.savedFileData; // Whatever your storage middleware populates
-      
+        console.log(fileData)
+        console.log(req.user)
+        console.log(req.body)
         
         // 1. Fetch current user to get existing avatarUrl if no new file is uploaded
         const currentUser = await prisma.user.findUnique({
